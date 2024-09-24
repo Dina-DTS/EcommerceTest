@@ -25,7 +25,7 @@ Allrouter(app)
 
 
 app.use('*',(req,res,next)=>{
-    next(new AppError("URL Not Founddd",404))
+    next(new AppError("URL Not Found",404))
 })
 
 //hello
