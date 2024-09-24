@@ -18,7 +18,6 @@ app.use(cors())
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 
-// hello
 
 app.use("/uploads",express.static("uploads"))
 
@@ -29,7 +28,7 @@ app.use('*',(req,res,next)=>{
     next(new AppError("URL Not Founddd",404))
 })
 
-
+//hello
 //global error to handle handleerror middleware
 app.use((err, req, res, next) => {
     res.status(err.statusCode).json({message:err.message,stack:err.stack})
