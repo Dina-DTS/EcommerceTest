@@ -18,6 +18,8 @@ app.use(cors())
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 
+// hello
+
 app.use("/uploads",express.static("uploads"))
 
 Allrouter(app)
