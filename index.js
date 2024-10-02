@@ -17,7 +17,7 @@ const port = +process.env.PORT;// Match the raw body to content type application
 
 
 
-app.post('/api/webhook', express.raw({type: 'application/json'}), handleError(async(req, res) => {
+app.post('/api/webhook', express.raw({type: 'application/json'}), handleError(async(req, res,next) => {
   const sig = req.headers['stripe-signature'].toString;
 
   let event= stripe.webhooks.constructEvent(req.body, sig, "whsec_ip0MTEI5JmPQiC8RmXbvYvZ8VaeTcRXP");
