@@ -1,6 +1,7 @@
 import CartModel from "../../../../db/models/cart.model.js";
 import orderModel from "../../../../db/models/order.model.js";
 import productModel from "../../../../db/models/product.model.js";
+import express from 'express'
 
 import { AppError } from "../../../../utils/AppError.js";
 import { handleError } from "../../../middleware/handleError.js";
@@ -25,7 +26,7 @@ export const addOrder = handleError(async (req, res, next) => {
     totalOrderPrice,
     shippingAddress:req.body.shippingAddress
   })
-//   update sold and qunatity
+//   update sold and qunatity bulikwrite
   if(order){
     let options=cart.cartItems.map(item=>({
         updateOne:{
@@ -94,3 +95,35 @@ export const onlinePayment=handleError(async(req,res,next)=>{
   });
   res.json({message:"Done ya basha",session})
 })
+
+const app=express()
+// Match the raw body to content type application/json
+app.post('/api/webhook', express.raw({type: 'application/json'}), (req, res) => {
+  const sig = req.headers['stripe-signature'];
+
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, whsec_ip0MTEI5JmPQiC8RmXbvYvZ8VaeTcRXP);
+  }
+  catch (err) {
+    res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+ if(event.type=="checkout.session.completed")
+ {
+  const checkoutSessionCompleted=event.data.object;
+  // create order
+  console.log("Done")
+ }
+ else{
+  console.log(`Unhandled event type ${event.type}`);
+
+ }
+ 
+
+  // Return a response to acknowledge receipt of the event
+  res.json({message:DOne});
+});
+
+app.listen(4242, () => console.log('Running on port 4242'));
+
