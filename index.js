@@ -35,7 +35,7 @@ app.post('/api/webhook', express.raw({type: 'application/json'}), handleError(as
  
 
   // Return a response to acknowledge receipt of the event
-  response.json({message:"success",checkoutSessionCompleted});
+  res.json({message:"success",checkoutSessionCompleted});
 }));
 
 
