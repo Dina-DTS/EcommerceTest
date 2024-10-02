@@ -22,34 +22,45 @@ app.post(
   "/api/webhook",
   express.raw({ type: "application/json" }),
   handleError(async (req, res, next) => {
-    const sig = req.headers["stripe-signature"].toString;
-
-    let event = stripe.webhooks.constructEvent(
-      req.body,
-      sig,
-      "whsec_ip0MTEI5JmPQiC8RmXbvYvZ8VaeTcRXP"
-    );
-
-    let checkoutSessionCompleted;
-    if (event.type == "checkout.session.completed") {
-      checkoutSessionCompleted = event.data.object;
-
-      let user= await userModel.findOne({email:checkoutSessionCompleted.customer_email})
-      let cart=await CartModel.findById(checkoutSessionCompleted.client_reference_id)
-      if (!cart) {
-        return next (new AppError("No cart to order",404))
-      }
+    const sig = req.headers["stripe-signature"];
     
-      // create order
+    if (!sig) {
+      return res.status(400).send("Missing Stripe signature");
+    }
+
+    let event;
+    try {
+      event = stripe.webhooks.constructEvent(
+        req.body,
+        sig.toString(),
+        "whsec_ip0MTEI5JmPQiC8RmXbvYvZ8VaeTcRXP"
+      );
+    } catch (err) {
+      console.error(`⚠️  Webhook signature verification failed.`, err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    if (event.type == "checkout.session.completed") {
+      const checkoutSessionCompleted = event.data.object;
+
+      let user = await userModel.findOne({ email: checkoutSessionCompleted.customer_email });
+      let cart = await CartModel.findById(checkoutSessionCompleted.client_reference_id);
+
+      if (!cart) {
+        return next(new AppError("No cart to order", 404));
+      }
+
+      // Create order
       let order = new orderModel({
         createdby: user._id,
         cartItems: cart.cartItems,
-        totalOrderPrice:checkoutSessionCompleted.amount_total /100,
+        totalOrderPrice: checkoutSessionCompleted.amount_total / 100,
         shippingAddress: checkoutSessionCompleted.metadata,
-        paymentMethod:'credit',
-        isPaid:true
+        paymentMethod: 'credit',
+        isPaid: true
       });
-      //   update sold and qunatity bulikwrite
+
+      // Update sold and quantity using bulkWrite
       if (order) {
         let options = cart.cartItems.map((item) => ({
           updateOne: {
@@ -60,10 +71,11 @@ app.post(
         await productModel.bulkWrite(options);
         await order.save();
       } else {
-        return next(new AppError("error occurs", 409));
+        return next(new AppError("Error occurred", 409));
       }
-      //   remove cart
-      await CartModel.findByIdAndDelete(req.params.id);
+
+      // Remove cart
+      await CartModel.findByIdAndDelete(checkoutSessionCompleted.client_reference_id);
     } else {
       console.log(`Unhandled event type ${event.type}`);
     }
@@ -72,6 +84,7 @@ app.post(
     res.json({ message: "success", checkoutSessionCompleted });
   })
 );
+
 
 app.use(express.json({ limit: "10mb" }));
 app.use(cors());
