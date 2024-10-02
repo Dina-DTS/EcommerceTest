@@ -39,9 +39,9 @@ app.post(
       console.error(`⚠️  Webhook signature verification failed.`, err.message);
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
-
+       let checkoutSessionCompleted ;
     if (event.type == "checkout.session.completed") {
-      const checkoutSessionCompleted = event.data.object;
+       checkoutSessionCompleted = event.data.object;
 
       let user = await userModel.findOne({ email: checkoutSessionCompleted.customer_email });
       let cart = await CartModel.findById(checkoutSessionCompleted.client_reference_id);
