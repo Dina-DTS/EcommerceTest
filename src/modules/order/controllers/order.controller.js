@@ -1,7 +1,6 @@
 import CartModel from "../../../../db/models/cart.model.js";
 import orderModel from "../../../../db/models/order.model.js";
 import productModel from "../../../../db/models/product.model.js";
-import express from 'express'
 
 import { AppError } from "../../../../utils/AppError.js";
 import { handleError } from "../../../middleware/handleError.js";
@@ -97,32 +96,7 @@ export const onlinePayment=handleError(async(req,res,next)=>{
   res.json({message:"Done ya basha",session})
 })
 
-// Match the raw body to content type application/json
- export const createOnlieOrder=handleError(async(req, res,next) => {
-  const sig = req.headers['stripe-signature'];
 
-  let event;
-
-  try {
-    event = stripe.webhooks.constructEvent(req.body, sig, whsec_ip0MTEI5JmPQiC8RmXbvYvZ8VaeTcRXP);
-  }
-  catch (err) {
-    res.status(400).send(`Webhook Error: ${err.message}`);
-  }
- if(event.type=="checkout.session.completed")
- {
-  const checkoutSessionCompleted=event.data.object;
-  // create order
- }
- else{
-  console.log(`Unhandled event type ${event.type}`);
-
- }
- 
-
-  // Return a response to acknowledge receipt of the event
-  res.json({message:"Done",checkoutSessionCompleted});
-});
 
 
 
