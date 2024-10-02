@@ -9,6 +9,7 @@ import { AppError } from "./utils/AppError.js";
 import { handleError } from "./src/middleware/handleError.js";
 import Stripe from "stripe";
 import userModel from "./db/models/user.model.js";
+import orderModel from "./db/models/order.model.js";
 const stripe = new Stripe(
   "sk_test_51OnNMxDuWEVNKbHFsQODM66IZm1OxHxCNQAoIKbBqgubHplCKoRbdNEJdIswhJ3gCHwgoOUajYNNnFTmw1w0kXmf00WGWaMWBx"
 );
