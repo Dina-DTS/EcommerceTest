@@ -64,6 +64,7 @@ export const getorder =handleError(async(req,res,next)=>{
 
 // export const deleteorder = deleteOne(CartModel);
 
+
 export const onlinePayment=handleError(async(req,res,next)=>{
 
   let cart=await CartModel.findById(req.params.id)
@@ -96,9 +97,8 @@ export const onlinePayment=handleError(async(req,res,next)=>{
   res.json({message:"Done ya basha",session})
 })
 
-const app=express()
 // Match the raw body to content type application/json
-app.post('/api/webhook', express.raw({type: 'application/json'}), (req, res) => {
+ export const createOnlieOrder=handleError(async(req, res,next) => {
   const sig = req.headers['stripe-signature'];
 
   let event;
@@ -125,5 +125,5 @@ app.post('/api/webhook', express.raw({type: 'application/json'}), (req, res) => 
   res.json({message:DOne});
 });
 
-app.listen(4242, () => console.log('Running on port 4242'));
+
 
