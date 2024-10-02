@@ -23,23 +23,19 @@ app.post(
   express.raw({ type: "application/json" }),
   handleError(async (req, res, next) => {
     const sig = req.headers["stripe-signature"];
-    
+
     if (!sig) {
-      return res.status(400).send("Missing Stripe signature");
+      throw new AppError("Missing Stripe signature", 400); // Let handleError catch this error
     }
 
-    let event;
-    try {
-      event = stripe.webhooks.constructEvent(
-        req.body,
-        sig.toString(),
-        "whsec_ip0MTEI5JmPQiC8RmXbvYvZ8VaeTcRXP"
-      );
-    } catch (err) {
-      console.error(`⚠️  Webhook signature verification failed.`, err.message);
-      return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
-       let checkoutSessionCompleted ;
+    // This will throw an error if the signature verification fails, 
+    // which will be caught by handleError middleware.
+    const event = stripe.webhooks.constructEvent(
+      req.body,
+      sig.toString(),
+      "whsec_ip0MTEI5JmPQiC8RmXbvYvZ8VaeTcRXP"
+    );
+     let checkoutSessionCompleted
     if (event.type == "checkout.session.completed") {
        checkoutSessionCompleted = event.data.object;
 
@@ -47,7 +43,7 @@ app.post(
       let cart = await CartModel.findById(checkoutSessionCompleted.client_reference_id);
 
       if (!cart) {
-        return next(new AppError("No cart to order", 404));
+        throw new AppError("No cart to order", 404); // Let handleError catch this error
       }
 
       // Create order
@@ -71,7 +67,7 @@ app.post(
         await productModel.bulkWrite(options);
         await order.save();
       } else {
-        return next(new AppError("Error occurred", 409));
+        throw new AppError("Error occurred while saving order", 409); // Let handleError catch this error
       }
 
       // Remove cart
