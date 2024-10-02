@@ -113,7 +113,6 @@ export const onlinePayment=handleError(async(req,res,next)=>{
  {
   const checkoutSessionCompleted=event.data.object;
   // create order
-  console.log("Done")
  }
  else{
   console.log(`Unhandled event type ${event.type}`);
@@ -122,7 +121,7 @@ export const onlinePayment=handleError(async(req,res,next)=>{
  
 
   // Return a response to acknowledge receipt of the event
-  res.json({message:DOne});
+  res.json({message:"Done",checkoutSessionCompleted});
 });
 
 
