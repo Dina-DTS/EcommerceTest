@@ -2,7 +2,9 @@
 
 import express from 'express'
 import { protectRoutes } from '../../auth/auth.controller.js'
-import { addOrder, getAllOrders, getorder, getorderById, onlinePayment } from '../controllers/order.controller.js'
+import { addOrder, createOnlinePayment, getAllOrders, getorder, getorderById, onlinePayment } from '../controllers/order.controller.js'
+const app = express();
+
 
 
 const OrderRouters=express.Router()
@@ -18,6 +20,10 @@ OrderRouters.route('/')
 
 OrderRouters.route('/checkout/:id')
 .post(protectRoutes,onlinePayment)
+
+OrderRouters.post(
+    "/api/webhook",
+    express.raw({ type: "application/json" }),createOnlinePayment)
 
 
 export default OrderRouters
