@@ -1,13 +1,17 @@
 import express from "express";
 import dotenv from "dotenv";
-
+import CartModel from "./db/models/cart.model.js";
+import productModel from "./db/models/product.model.js";
 import cors from "cors";
 import connecttodb from "./db/db.connection.js";
 import Allrouter from "./routers/v1.routes.js";
 import { AppError } from "./utils/AppError.js";
 import { handleError } from "./src/middleware/handleError.js";
 import Stripe from "stripe";
-
+import userModel from "./db/models/user.model.js";
+import orderModel from "./db/models/order.model.js";
+import OrderRouters from "./src/modules/order/routers/order.router.js";
+import { createOnlinePayment } from "./src/modules/order/controllers/order.controller.js";
 const stripe = new Stripe(
   "sk_test_51OnNMxDuWEVNKbHFsQODM66IZm1OxHxCNQAoIKbBqgubHplCKoRbdNEJdIswhJ3gCHwgoOUajYNNnFTmw1w0kXmf00WGWaMWBx"
 );
@@ -79,14 +83,13 @@ const port = +process.env.PORT; // Match the raw body to content type applicatio
 //   })
 // );
 
-app.use((req,res,next)=>{
-  if(req.originalUrl=="/api/webhook"){
-    next()
-  }else{
-    express.json()
-    (req,res,next)
-  }
-});
+OrderRouters.post(
+  "/api/webhook",
+  express.raw({ type: "application/json" }),
+  createOnlinePayment
+);
+
+app.use(express.json({ limit: "10mb" }));
 app.use(cors());
 
 // Increase the limit for JSON payloads

@@ -2,7 +2,6 @@ import express from "express";
 import { protectRoutes } from "../../auth/auth.controller.js";
 import {
   addOrder,
-  createOnlinePayment,
   getAllOrders,
   getorder,
   getorderById,
@@ -22,11 +21,11 @@ OrderRouters.route("/")
 
 OrderRouters.route("/checkout/:id").post(protectRoutes, onlinePayment);
 // Add the webhook route with express.raw() middleware
-OrderRouters.post(
-  "/api/webhook",
-  express.raw({ type: "application/json" }),
-  createOnlinePayment
-);
+// OrderRouters.post(
+//   "/api/webhook",
+//   express.raw({ type: "application/json" }),
+//   createOnlinePayment
+// );
 
 // OrderRouters.post(
 //     "/api/webhook",
