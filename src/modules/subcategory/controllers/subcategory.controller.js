@@ -1,7 +1,7 @@
 import slugify from "slugify";
 import { handleError } from "../../../middleware/handleError.js";
 import subcategoryModel from "../../../../db/models/subcategoty.model.js";
-import { deleteOne, getitembyid } from "../../handlers/apihandlers.js";
+import { deleteOne, getAllItems, getitembyid } from "../../handlers/apihandlers.js";
 import ApiFeatures from "../../../../utils/services/ApiFeatures.js";
 
 
@@ -11,6 +11,7 @@ export const addsubcategory = handleError(async (req, res,next) => {
   req.body.slug = slugify(req.body.title);
 
   req.body.image = req.file.filename;
+  req.body.createdby=req.user._id
 
   //here i want show details before store in db
   const preCategory = new subcategoryModel(req.body);
@@ -19,16 +20,7 @@ export const addsubcategory = handleError(async (req, res,next) => {
 });
 
 
-export const getAllSubCategries = handleError(async (req, res,next) => {
- let  filtersObject={}
-  if(req.params.category){
-    filtersObject.category=req.params.category
-  }
-  let apifeature= new ApiFeatures(subcategoryModel.find(filtersObject),req.query).pagination().sort().fields().filter().search()
-  let gettallsubcategory = await apifeature.mongooseQuery
-  res.json({ message: "Done", gettallsubcategory });
-}
-)
+export const getAllSubCategries = getAllItems(subcategoryModel)
 
 export const getsubCategoryById = getitembyid(subcategoryModel)
 

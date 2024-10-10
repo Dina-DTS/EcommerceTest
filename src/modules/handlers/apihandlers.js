@@ -35,11 +35,25 @@ export const getitembyid=(model)=>{
   });
 }
 
-export const getAllItems=(model)=>{
-  return  handleError(async (req, res,next) => {
-    let apifeature= new ApiFeatures(model.find(),req.query).pagination().sort().fields().filter().search()
-     let getitems = await apifeature.mongooseQuery
-     res.json({ message: "Done Get All items ", getitems ,page:apifeature.page});
-   });
-   
-}
+export const getAllItems = (model, filters = {}) => {
+  return handleError(async (req, res, next) => {
+    // Merge dynamic filters from request parameters (if any) with predefined filters
+    let filtersObject = { ...filters };
+
+    // If additional filter comes in the request params or query (like category), add it
+    if (req.params.category) {
+      filtersObject.category = req.params.category;
+    }
+
+    // Apply filters using ApiFeatures
+    let apifeature = new ApiFeatures(model.find(filtersObject), req.query)
+      .pagination()
+      .sort()
+      .fields()
+      .filter()
+      .search();
+
+    let getItems = await apifeature.mongooseQuery;
+    res.json({ message: "Done Get All items", getItems, page: apifeature.page });
+  });
+};
