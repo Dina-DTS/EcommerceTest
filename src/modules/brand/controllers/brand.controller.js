@@ -10,6 +10,7 @@ export const addBrand = handleError(async (req, res,next) => {
   req.body.slug = slugify(req.body.title);
 
   req.body.logo = req.file.filename;
+  req.body.createdby=req.user._id
 
   //here i want show details before store in db
   const preBrand = new brandModel(req.body);

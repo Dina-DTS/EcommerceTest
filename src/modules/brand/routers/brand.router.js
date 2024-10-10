@@ -3,19 +3,21 @@ import { validation } from '../../../middleware/validation.js'
 import { uploadSingle } from '../../../../utils/fileUpload.js'
 import { addBrandShema, deleteBrandSchema, getBrandByIDSchema, updateBrandSchema } from '../validation/brand.validation.js'
 import { addBrand, deleteBrand, getAllBrands, getbrandById, updateBrand } from '../controllers/brand.controller.js'
+import { allowTo, protectRoutes } from '../../auth/auth.controller.js'
 
 
 const BrandRoutes=express.Router()
 
 
 BrandRoutes.route("/")
-.post(uploadSingle('image'),validation(addBrandShema),addBrand)
-.get(getAllBrands)
+.post(protectRoutes,allowTo("Admin"),
+uploadSingle('image'),validation(addBrandShema),addBrand)
+.get(protectRoutes,allowTo("Admin","User"),getAllBrands)
 
 
 BrandRoutes.route("/:id")
-.get(validation(getBrandByIDSchema),getbrandById)
-.patch(validation(updateBrandSchema),updateBrand)
-.delete(validation(deleteBrandSchema),deleteBrand)
+.get(protectRoutes,allowTo("Admin","User"),validation(getBrandByIDSchema),getbrandById)
+.patch(protectRoutes,allowTo("Admin"),validation(updateBrandSchema),updateBrand)
+.delete(protectRoutes,allowTo("Admin"),validation(deleteBrandSchema),deleteBrand)
 
 export default BrandRoutes
