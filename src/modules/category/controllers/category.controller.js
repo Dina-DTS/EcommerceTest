@@ -11,6 +11,7 @@ export const addCategory = handleError(async (req, res,next) => {
   req.body.slug = slugify(req.body.title);
 
   req.body.image = req.file.filename;
+  req.body.createdby=req.user._id
 
   //here i want show details before store in db
   const preCategory = new categoryModel(req.body);
