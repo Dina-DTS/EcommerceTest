@@ -9,8 +9,8 @@ export const addProduct = handleError(async (req, res,next) => {
   req.body.imageCover = req.files.imageCover[0].filename
   req.body.images = req.files.images.map(ele=>ele.filename)
   console.log(req.files); // Check what files are being received
-
   req.body.createdby=req.user._id
+
 
   //here i want show details before store in db
   const preProduct = new productModel(req.body);
