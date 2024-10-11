@@ -26,7 +26,7 @@ const productSchema = new mongoose.Schema(
     },
     price: {
       type: Number,
-      min: 0,
+      min: 50,
       required: true,
     },
     priceAfterdiscount: {

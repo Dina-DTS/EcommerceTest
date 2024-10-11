@@ -5,8 +5,7 @@ import userModel from "../../../../db/models/user.model.js";
 
 export const addToWishlist = handleError(async (req, res,next) => {
     let{product}=req.body
-
-    
+  // here want to check to product
 
   const updateuser = await userModel.findOneAndUpdate(
     req.user._id,

@@ -8,18 +8,15 @@ import { allowTo, protectRoutes } from '../../auth/auth.controller.js'
 
 const ProductRoutes=express.Router()
 
-const fields = [
-  { name: 'imageCover', maxCount: 1 }, // Single file
-  { name: 'images', maxCount: 10 }     // Array of files
-];
+
 
 // Route for adding a product
 ProductRoutes.route('/')
   .post(
     protectRoutes,
-    allowTo("Admin","User"),
-    uploadFields(fields), 
-    validation(addProductShema), 
+    allowTo("Admin"),
+    uploadFields([{ name:'imageCover', maxCount: 1 }, { name: 'images', maxCount: 10 }]),
+    validation(addProductShema),
     addProduct
   )
 .get(getAllProducts)

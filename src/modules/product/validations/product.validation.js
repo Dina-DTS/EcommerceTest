@@ -4,9 +4,9 @@ export const addProductShema=Joi.object({
 
     title:Joi.string().min(3).max(200).required().trim(),
     description:Joi.string().min(3).max(10000).required().trim(),
-    price:Joi.number().min(0).required(),
+    price:Joi.number().min(50).required(),
     priceAfterdiscount:Joi.number().min(0).required(),
-    quantity:Joi.number().min(0).required(),
+    quantity:Joi.number().min(1).required(),
     category:Joi.string().hex().length(24).required(),
     subcategory:Joi.string().hex().length(24).required(),
     brand: Joi.string().hex().length(24).required(),
