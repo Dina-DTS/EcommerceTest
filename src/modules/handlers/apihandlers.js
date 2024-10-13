@@ -22,8 +22,7 @@ export const deleteOne = (model) => {
     }
 
     // Proceed with deleting the item
-    await item.remove();
-
+    await model.findByIdAndDelete(req.params.id); // Directly use findByIdAndDelete
     // Respond with a success message
     res.json({ message: "Deleted", item });
   });
