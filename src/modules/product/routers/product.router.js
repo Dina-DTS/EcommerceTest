@@ -35,6 +35,8 @@ ProductRoutes.route("/")
 ProductRoutes.route("/:id")
   .get(validation(getProductByIDSchema), getProductById)
   .patch(
+    protectRoutes,
+    allowTo("Admin"),
     uploadFields([
       { name: "imageCover", maxCount: 1 },
       { name: "images", maxCount: 10 },
@@ -42,6 +44,7 @@ ProductRoutes.route("/:id")
     validation(updateProductSchema),
     updateProducts
   )
-  .delete(validation(deleteProductSchema), deleteProduct);
+  .delete( protectRoutes,
+    allowTo("Admin"),validation(deleteProductSchema), deleteProduct);
 
 export default ProductRoutes;

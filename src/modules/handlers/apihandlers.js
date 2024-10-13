@@ -8,15 +8,27 @@ import { AppError } from "../../../utils/AppError.js";
 
 export const deleteOne = (model) => {
   return handleError(async (req, res, next) => {
-    const item = await model.findByIdAndDelete(req.params.id);
+    // Find the item by its ID
+    const item = await model.findById(req.params.id);
 
+    // If item doesn't exist, return error
     if (!item) {
       return next(new AppError("Item not found", 404));
     }
 
+    // Check if the logged-in user is the creator of the item
+    if (!req.user || !req.user._id.equals(item.createdby)) {
+      return next(new AppError("You are not authorized to delete this item", 403));
+    }
+
+    // Proceed with deleting the item
+    await item.remove();
+
+    // Respond with a success message
     res.json({ message: "Deleted", item });
   });
 };
+
 
 export const getitembyid = (model) => {
   return handleError(async (req, res, next) => {
