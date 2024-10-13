@@ -2,38 +2,45 @@ import ApiFeatures from "../../../utils/services/ApiFeatures.js";
 import { handleError } from "../../middleware/handleError.js";
 import QRCode from 'qrcode'
 import couponModel from "../../../db/models/coupon.model.js";
+import { AppError } from "../../../utils/AppError.js";
 
 
 
-export const deleteOne=(model)=>{
-   return handleError(async (req, res,next) => {
-        const items = await model.findByIdAndDelete(req.params.id);
-        items && res.json({ message: "Delted", items });
-        !items && res.json({ message: "Not Found" });
-      });
-      
-}
+export const deleteOne = (model) => {
+  return handleError(async (req, res, next) => {
+    const item = await model.findByIdAndDelete(req.params.id);
 
-export const getitembyid=(model)=>{
- return handleError(async (req, res,next) => {
-  const { id } = req.params;
+    if (!item) {
+      return next(new AppError("Item not found", 404));
+    }
+
+    res.json({ message: "Deleted", item });
+  });
+};
+
+export const getitembyid = (model) => {
+  return handleError(async (req, res, next) => {
+    const { id } = req.params;
+    
     const getItem = await model.findById(id);
 
     if (!getItem) {
-      return res.json({ message: "Not Found" });
+      return next(new AppError("Item not found", 404));
     }
 
     let response = { message: "Done", getItem };
 
     // If the model is 'couponModel', generate a QR code and include it in the response
     if (model === couponModel) {
-      const url = await QRCode.toDataURL(getItem.code); // assuming `getItem.code` contains the coupon code
+      const url = await QRCode.toDataURL(getItem.code); // Assuming `getItem.code` contains the coupon code
       response.url = url;
     }
 
+    // Return the item (and QR code if applicable)
     res.json(response);
   });
-}
+};
+
 
 export const getAllItems = (model, filters = {}) => {
   return handleError(async (req, res, next) => {
@@ -54,6 +61,12 @@ export const getAllItems = (model, filters = {}) => {
       .search();
 
     let getItems = await apifeature.mongooseQuery;
+
+    if (getItems.length === 0) {
+      return next(new AppError("No items found", 404));
+    }
+
     res.json({ message: "Done Get All items", getItems, page: apifeature.page });
   });
 };
+

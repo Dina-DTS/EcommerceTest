@@ -11,7 +11,6 @@ export const addProductShema=Joi.object({
     subcategory:Joi.string().hex().length(24).required(),
     brand: Joi.string().hex().length(24).required(),
     createdby: Joi.string().hex().length(24).optional(),
-
     imageCover:Joi.array().items(Joi.object({
         fieldname: Joi.string().required(),
         originalname: Joi.string().required(),
@@ -21,8 +20,9 @@ export const addProductShema=Joi.object({
         filename:Joi.string().required(),
         path:Joi.string().required(),
         size: Joi.number().max(5242880).required()
-      }).required()).length(1).required(),
+      }).required()).required(),
 
+  
     images:Joi.array().items(Joi.object({
         fieldname: Joi.string().required(),
         originalname: Joi.string().required(),
