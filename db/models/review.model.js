@@ -27,9 +27,9 @@ const reviewSchema = new mongoose.Schema(
 	},
 	{ timestamps: true }
 )
-reviewSchema.pre(/^find/,function(){
-	this.populate('createdby','name')
-})
+// reviewSchema.pre(/^find/,function(){
+// 	this.populate('createdby','name')
+// })
 
 
 const reviewModel = mongoose.model('Review', reviewSchema)

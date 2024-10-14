@@ -16,17 +16,19 @@ export const deleteOne = (model) => {
       return next(new AppError("Item not found", 404));
     }
 
-    // Check if the logged-in user is the creator of the item
-    if (!req.user || !req.user._id.equals(item.createdby)) {
+    // Check if the logged-in user is either the creator of the item or has an admin role
+    if (!req.user || (!req.user._id.equals(item.createdby) && req.user.role !== 'admin')) {
       return next(new AppError("You are not authorized to delete this item", 403));
     }
 
     // Proceed with deleting the item
     await model.findByIdAndDelete(req.params.id); // Directly use findByIdAndDelete
+
     // Respond with a success message
     res.json({ message: "Deleted", item });
   });
 };
+
 
 
 export const getitembyid = (model) => {
