@@ -8,6 +8,7 @@ import Joi from "joi";
 
 });
  export const updatecouponSchema = Joi.object({
+    id: Joi.string().hex().length(24).required(),
   code: Joi.string().alphanum().min(3).max(200).trim().uppercase(),
   expiry: Joi.date().greater("now"),
   discount: Joi.number().min(0).max(100),
