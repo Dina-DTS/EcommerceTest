@@ -6,24 +6,40 @@ const couponschema = new mongoose.Schema(
 		
 		code: {
 			type: String,
-			minLength: 3,
-			maxLength: 200,
-			required: true,
+			minlength: 3,
+			maxlength: 200,
+			required: [true, 'Coupon code is required'],
 			trim: true,
 			unique: true,
-		},
-		expiry: {
-			type: String,
-			required: true,
-		},
-		discount: {
+			match: [/^[A-Z0-9]+$/, 'Coupon code must be alphanumeric and uppercase'],
+		  },
+		  expiry: {
+			type: Date,
+			required: [true, 'Expiry date is required'],
+			validate: {
+			  validator: function (value) {
+				return value > Date.now()
+			  },
+			  message: 'Expiry date must be in the future',
+			},
+		  },
+		  discount: {
 			type: Number,
-			required: true,
-			min:0
+			required: [true, 'Discount value is required'],
+			min: [0, 'Discount cannot be negative'],
+			max: [100, 'Discount cannot exceed 100%'],
+		  },
+		  // Optional: Add fields like `usageLimit`, `timesUsed`, etc.
+		 createdby:{
+			type: mongoose.Schema.Types.ObjectId,
+			ref: 'User',
+		 },
+		 updatedBy: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: 'User',  // Reference to the User model, or just store the ID
+		  },
 		},
-		
-	},
-	{ timestamps: true }
+		{ timestamps: true }
 )
 
 
