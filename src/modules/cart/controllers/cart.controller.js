@@ -5,44 +5,102 @@ import { AppError } from "../../../../utils/AppError.js";
 import { handleError } from "../../../middleware/handleError.js";
 import { deleteOne, getitembyid } from "../../handlers/apihandlers.js";
 
+// Function to calculate total price
 function calcPrice(cart) {
   let totalPrice = 0;
-  cart.cartItems.forEach((ele) => {
-    totalPrice += ele.quantity * ele.price;
+  cart.cartItems.forEach((item) => {
+    totalPrice += item.quantity * item.price;
   });
   cart.totalPrice = totalPrice;
+
+  // Calculate the price after discount if discount is provided
+  if (cart.discount) {
+    cart.totalPriceAfterDiscount =
+      totalPrice - (totalPrice * cart.discount) / 100;
+  }
 }
 
-export const addCart = handleError(async (req, res, next) => {
-  // here i take product from body i want select the price of this product to add it in boy
-  let product = await productModel.findById(req.body.product).select("price");
-  !product && next(new AppError("Product Not Found", 404));
-  req.body.price = product.price;
-  //  here i want check if the cart exit already or not so if the user have cart i dont make another one add immediatly
-  let iscart = await CartModel.findOne({ createdby: req.user._id });
-  if (!iscart) {
-    let cart = new CartModel({
+export const addCartWithUpdate = handleError(async (req, res, next) => {
+  // Extract product IDs from cartItems
+  const productIds = req.body.cartItems.map((item) => item.product);
+
+  // Fetch all products in one query and select only the price and _id
+  const products = await productModel
+    .find({ _id: { $in: productIds } })
+    .select("price _id");
+
+  // Check if all products exist in the database
+  const productMap = products.reduce((acc, product) => {
+    acc[product._id] = product.price;
+    return acc;
+  }, {});
+
+  // Check for missing products before proceeding
+  const missingProducts = req.body.cartItems.filter(
+    (item) => !productMap[item.product]
+  );
+
+  if (missingProducts.length > 0) {
+    return next( new AppError( `Product(s) not found: ${missingProducts  .map((item) => item.product)  .join(", ")}`,  404 ));
+  }
+
+  // Assign prices to each item in cartItems
+  req.body.cartItems.forEach((item) => {
+    item.price = productMap[item.product];
+  });
+
+  // Check if the cart already exists for the user
+  let cart = await CartModel.findOne({ createdby: req.user._id });
+
+  if (!cart) {
+    // Create a new cart if none exists
+    cart = new CartModel({
       createdby: req.user._id,
-      cartItems: [req.body],
+      cartItems: req.body.cartItems,
+      discount: req.body.discount || 0, // Store discount from request body (if exists)
     });
     calcPrice(cart);
-    await cart.save();
-    return res.status(201).json({ message: "Done Added Cart", cart });
-  }
-  //  here alrady have cart so find ele ele to increase quantity
-  let item = iscart.cartItems.find((ele) => ele.product == req.body.product);
-  if (item) {
-    item.quantity += 1;
-  } else {
-    iscart.cartItems.push(req.body);
-  }
-  calcPrice(iscart);
-  if (iscart.discount)
-    iscart.totalPriceAfterDiscount =
-      iscart.totalPrice - (iscart.totalPrice * iscart.discount) / 100;
 
-  await iscart.save();
-  res.json({ message: "Addedcsuccess", iscart });
+    // Ensure totalPrice is a valid number before saving
+    if (isNaN(cart.totalPrice) || cart.totalPrice <= 0) {
+      return next(
+        new AppError("Invalid total price. Please check your cart items.", 400)
+      );
+    }
+    await cart.save();
+    return res.status(201).json({ message: "Cart created successfully", cart });
+  }
+
+  // If the cart already exists, update the cart
+  req.body.cartItems.forEach((item) => {
+    let existingItem = cart.cartItems.find(
+      (cartItem) => cartItem.product.toString() === item.product.toString()
+    );
+    if (existingItem) {
+      existingItem.quantity += 1; // Automatically increase quantity by 1 for existing items
+    } else {
+      cart.cartItems.push(item); // Add new product to the cart
+    }
+  });
+
+  // Update discount if it's passed in the request body
+  if (req.body.discount !== undefined) {
+    cart.discount = req.body.discount;
+  }
+
+  // Recalculate total price for the updated cart
+  calcPrice(cart);
+
+  // Ensure totalPrice is a valid number before saving
+  if (isNaN(cart.totalPrice) || cart.totalPrice <= 0) {
+    return next(
+      new AppError("Invalid total price. Please check your cart items.", 400)
+    );
+  }
+
+  // Save the updated cart to the database
+  await cart.save();
+  res.json({ message: "Cart updated successfully", cart });
 });
 
 export const getcart = handleError(async (req, res, next) => {
@@ -51,49 +109,65 @@ export const getcart = handleError(async (req, res, next) => {
 });
 
 export const removeCartItem = handleError(async (req, res, next) => {
-  let cart = await CartModel.findOneAndUpdate(
-    { createdby: req.user._id },
-    { $pull: { cartItems: { _id: req.params.id } } },
-    { new: true }
-  );
+  // Find the cart
+  let cart = await CartModel.findOne({ createdby: req.user._id });
 
   if (!cart) {
-    return res.status(404).json({ message: "Cart not found" });
+    return next(new AppError("Cart not found", 404));
   }
 
-  console.log(cart);
+  // Check if the item exists in cartItems
+  const itemIndex = cart.cartItems.findIndex(
+    (item) => item._id.toString() === req.params.id
+  );
+
+  if (itemIndex === -1) {
+    return next(new AppError("Item not found in the cart", 404)); // Item doesn't exist in the cart
+  }
+
+  // If the item exists, remove it
+  cart.cartItems.splice(itemIndex, 1); // Remove item from the cart
+
+  // Recalculate the price after removing the item
   calcPrice(cart);
 
-  res.json({ message: "Remove Item Successfully", cart });
+  // Save the updated cart
+  await cart.save();
+
+  // Respond with the updated cart
+  res.json({ message: "Item removed successfully", cart });
 });
 
 export const getcartById = getitembyid(CartModel);
 
-export const updatecart = handleError(async (req, res, next) => {
-  let product = await productModel.findById(req.body.product).select("price");
-  !product && next(new AppError("Product Not Found", 404));
-  req.body.price = product.price;
-  //  here i want check if the cart exit already or not so if the user have cart i dont make another one add immediatly
-  let iscart = await CartModel.findOne({ createdby: req.user._id });
-  //  here alrady have cart so find ele ele to increase quantity
-  let item = iscart.cartItems.find((ele) => ele.product == req.body.product);
-  if (!item) {
-    return next(new AppError("Not Found this cart", 404));
-  }
-  item.quantity = req.body.quantity;
-  calcPrice(iscart);
-  await iscart.save();
-  res.json({ message: "Addedcsuccess", iscart });
-});
+export const applyCoupon = handleError(async (req, res, next) => {
+  const code = await couponModel.findOne({ code: req.params.code });
 
-export const applyCoupon=handleError(async(req,res,next)=>{
-  let code= await couponModel.findOne({code:req.params.code});
-  console.log(code)
-  let cart=await CartModel.findOne({createdby:req.user._id});
-  cart.totalPriceAfterDiscount=cart.totalPrice-(cart.totalPrice *code.discount) /100 ;
-  cart.discount=code.discount;
-  await cart.save()
-  res.json({message:"Done",cart})
-})
+  if (!code) {
+    return next(new AppError("Invalid coupon code", 404));
+  }
+
+  if (code.expiryDate && new Date(code.expiryDate) < new Date()) {
+    return next(new AppError("Coupon has expired", 400));
+  }
+
+  const cart = await CartModel.findOne({ createdby: req.user._id });
+
+  if (!cart) {
+    return next(new AppError("Cart not found", 404));
+  }
+
+  const discountAmount = (cart.totalPrice * code.discount) / 100;
+  cart.totalPriceAfterDiscount = cart.totalPrice - discountAmount;
+
+  if (cart.totalPriceAfterDiscount < 0) {
+    return next(new AppError("Discount exceeds total price", 400));
+  }
+
+  cart.discount = code.discount;
+  await cart.save();
+
+  res.json({ message: "Coupon applied successfully", cart });
+});
 
 export const deletecart = deleteOne(CartModel);
