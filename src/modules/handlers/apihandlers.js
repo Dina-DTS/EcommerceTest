@@ -17,7 +17,7 @@ export const deleteOne = (model) => {
     }
 
     // Check if the logged-in user is either the creator of the item or has an admin role
-    if (!req.user || (!req.user._id.equals(item.createdby) && req.user.role !== 'admin')) {
+    if (!req.user || (!req.user._id.equals(item.createdby) && req.user.role !== 'Admin')) {
       return next(new AppError("You are not authorized to delete this item", 403));
     }
 
