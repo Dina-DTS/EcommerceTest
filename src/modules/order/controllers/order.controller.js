@@ -4,10 +4,9 @@ import productModel from "../../../../db/models/product.model.js";
 import userModel from "../../../../db/models/user.model.js";
 import { AppError } from "../../../../utils/AppError.js";
 import { handleError } from "../../../middleware/handleError.js";
-import { deleteOne, getAllItems, getitembyid } from "../../handlers/apihandlers.js";
+import { getAllItems, getitembyid } from "../../handlers/apihandlers.js";
 import Stripe from 'stripe';
 const stripe = new Stripe('sk_test_51OnNMxDuWEVNKbHFsQODM66IZm1OxHxCNQAoIKbBqgubHplCKoRbdNEJdIswhJ3gCHwgoOUajYNNnFTmw1w0kXmf00WGWaMWBx');
-
 
 
 
@@ -15,6 +14,10 @@ export const addOrder = handleError(async (req, res, next) => {
   let cart=await CartModel.findById(req.params.id)
   if (!cart) {
     return next (new AppError("No cart to order",404))
+  }
+  // Check if the user who created the cart is the same as the one making the order
+  if (cart.createdby.toString() !== req.user._id.toString()) {
+    return next(new AppError('You are not authorized to make an order from this cart', 403));
   }
 
   let totalOrderPrice=cart.totalPriceAfterDiscount?cart.totalPriceAfterDiscount:cart.totalPrice;
@@ -30,14 +33,12 @@ export const addOrder = handleError(async (req, res, next) => {
         updateOne:{
             filter:{_id:item.product},
             update:{$inc:{quantity:-item.quantity,sold:item.quantity}},
-
         }
-
     }));
     await productModel.bulkWrite(options)
     await order.save()
-  }else{
-    return next(new AppError("error occurs",409))
+  }else {
+    return next(new AppError('Error occurred while saving the order', 409));
   }
 //   remove cart
 await CartModel.findByIdAndDelete(req.params.id)
@@ -47,26 +48,21 @@ export const getAllOrders = getAllItems(orderModel)
 
 export const getorderById = getitembyid(orderModel);
 
-
 //for user making
 export const getorder =handleError(async(req,res,next)=>{
     let order = await orderModel.findOne({ createdby: req.user._id })
-    console.log(order)
     res.json({message:"Done",order})
 })
 
-
-// export const updateorder = handleError(async (req, res, next) => {
- 
-// });
-
-
-// export const deleteorder = deleteOne(CartModel);
-
-
 export const onlinePayment=handleError(async(req,res,next)=>{
-
   let cart=await CartModel.findById(req.params.id)
+  if (!cart) {
+    return next (new AppError("No cart to order",404))
+  }
+// Check if the user who created the cart is the same as the one making the order
+  if (cart.createdby.toString() !== req.user._id.toString()) {
+    return next(new AppError('You are not authorized to make an order from this cart', 403));
+  }
   let totalOrderPrice=cart.totalPriceAfterDiscount?cart.totalPriceAfterDiscount:cart.totalPrice;
 
 
@@ -94,8 +90,10 @@ export const onlinePayment=handleError(async(req,res,next)=>{
 
   });
   res.json({message:"Done ya basha",session})
+
 })
 
+// CHECK RESERVE ORDER
 export const createOnlinePayment=handleError(async (req, res, next) => {
   const sig = req.headers["stripe-signature"];
 
