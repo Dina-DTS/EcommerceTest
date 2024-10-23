@@ -41,11 +41,11 @@ const userschema = new mongoose.Schema(
 		changePasswordAt:Date,
 		Active: {
 			type: Boolean,
-			default: true,
-		},
-		verfied: {
-			type: Boolean,
 			default: false,
+		},
+		phone:{
+			type:String,
+			unique:true
 		},
 
 	},

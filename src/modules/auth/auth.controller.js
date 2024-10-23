@@ -9,7 +9,7 @@ import jwt from "jsonwebtoken";
 export const signUp = handleError(async (req, res, next) => {
   let isFound = await userModel.findOne({ email: req.body.email });
   if (isFound) return next(new AppError("email already exit", 409));
-  let user = new userModel(req.body);
+  let user = new userModel({ ...req.body, Active: true });
   await user.save();
   res.json({ message: "Added user", user });
 });
@@ -20,7 +20,6 @@ export const SignIN = handleError(async (req, res, next) => {
 
   // Find the user by email
   let isFound = await userModel.findOne({ email });
-
   // Only proceed with password comparison if the user is found
   if (isFound && (await bcrypt.compare(password, isFound.password))) {
     let token = jwt.sign(

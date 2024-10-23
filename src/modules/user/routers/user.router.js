@@ -1,18 +1,17 @@
 import express from 'express'
-import { addUser,deleteuser,updateuser,getuserById,getAlluser, changePassword } from '../controllers/user.controller.js'
+import { deleteuser,updateuser,getuserById,getAlluser, changePassword } from '../controllers/user.controller.js'
+import { allowTo, protectRoutes } from '../../auth/auth.controller.js'
 
 const userRouters=express.Router()
 
 
 userRouters.route("/")
-.post(addUser)
-.get(getAlluser)
-
+.get(protectRoutes,allowTo('Admin'),getAlluser)
 
 userRouters.route("/:id")
-.get(getuserById)
-.patch(updateuser)
-.delete(deleteuser)
+.get( protectRoutes,allowTo("User","Admin"),getuserById)
+.patch(protectRoutes,allowTo("User","Admin"),updateuser)
+.delete(protectRoutes,allowTo("Admin"),deleteuser)
 
-userRouters.put("/changepassword/:id",changePassword)
+userRouters.put("/changepassword",protectRoutes,allowTo("User","Admin"),changePassword)
 export default userRouters

@@ -73,13 +73,13 @@ export const getAllItems = (model, filters = {}) => {
       .filter()
       .search();
 
-    let getItems = await apifeature.mongooseQuery;
+    let getObjects = await apifeature.mongooseQuery;
 
-    if (getItems.length === 0) {
+    if (getObjects.length === 0) {
       return next(new AppError("No items found", 404));
     }
 
-    res.json({ message: "Done Get All items", getItems, page: apifeature.page });
+    res.json({ message: "Done Get All items", getObjects, page: apifeature.page });
   });
 };
 

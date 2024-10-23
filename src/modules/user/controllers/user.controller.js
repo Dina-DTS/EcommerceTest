@@ -4,43 +4,52 @@ import { deleteOne,getAllItems,getitembyid } from "../../handlers/apihandlers.js
 import { AppError } from "../../../../utils/AppError.js";
 
 
-export const addUser = handleError(async(req, res,next) => {
-  let user= await userModel.findOne({email:req.body.email})
-  if (user) {
- return next(new AppError("Duplicate Email",409))
-  }
-  
-  const preuser = new userModel(req.body);
-  let adduser = await preuser.save();
-  res.json({ message: "Added user", adduser });
-});
-
 
 export const getAlluser = getAllItems(userModel)
 
 export const getuserById = getitembyid(userModel)
 
-export const updateuser = handleError(async (req, res,next) => {
+export const updateuser = handleError(async (req, res, next) => {
+  const { id } = req.params;
 
-    let {id}=req.params
-
+  // Find the user by ID and update the user
   const updateuser = await userModel.findOneAndUpdate(
-    {_id:id},
+    { _id: id },
     req.body,
     { new: true }
   );
-  updateuser && res.json({ message: "Done", updateuser });
-  !updateuser && res.json({ message: "Not Found" });
+
+  // If the user is not found, throw an error
+  if (!updateuser) {
+    return next(new AppError("User not found", 404)); // Use AppError for user not found
+  }
+
+  // If the update is successful, return the updated user
+  res.json({ message: "User updated successfully", updateuser });
 });
+
 
 export const deleteuser =deleteOne(userModel)
 
-export const changePassword = handleError(async (req, res,next) => {
-     let {id}=req.params
-     req.body.changePasswordAt=Date.now();
-     
-    const updateuser = await userModel.findOneAndUpdate({_id:id},req.body,{new:true} );
-    updateuser && res.json({ message: "Done", updateuser });
-    !updateuser && res.json({ message: "Not Found" });
-  });
-  
+export const changePassword = handleError(async (req, res, next) => {
+  // Use the ID from the authenticated user
+  const userId = req.user._id; 
+
+  // Update the changePasswordAt field to the current time
+  req.body.changePasswordAt = Date.now();
+
+  // Find the user by ID and update the password
+  const updateUser = await userModel.findOneAndUpdate(
+    { _id: userId },
+    req.body,
+    { new: true }
+  );
+
+  // Check if the user was found and updated
+  if (!updateUser) {
+    return next(new AppError("User not found", 404)); // Handle user not found case
+  }
+
+  res.json({ message: "Password changed successfully", updateUser });
+});
+
