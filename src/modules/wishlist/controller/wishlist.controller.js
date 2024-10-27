@@ -1,47 +1,61 @@
 import { handleError } from "../../../middleware/handleError.js";
 import userModel from "../../../../db/models/user.model.js";
+import { AppError } from "../../../../utils/AppError.js";
 
 
 
-export const addToWishlist = handleError(async (req, res,next) => {
-    let{product}=req.body
-  // here want to check to product
+export const addToWishlist = handleError(async (req, res, next) => {
+  
+  const { product } = req.body;
 
+  // Additional checks or database operations
   const updateuser = await userModel.findOneAndUpdate(
-    req.user._id,
-    {
-        $addToSet:{WishList:product}
+      { _id: req.user._id },
+      {
+          $addToSet: { WishList: product }
+      },
+      { new: true }
+  ).select('name WishList');  // Select only the fields you want to return
+  ;
 
-    },
-    { new: true }
-  );
-  updateuser && res.json({ message: "Done", updateuser });
-  !updateuser && res.json({ message: "Not Found" });
+  if (!updateuser) {
+      return next(new AppError("User not found", 404));
+  }
+
+  res.json({ message: "Done", updateuser });
 });
 
 
-export const removeFromWishlist = handleError(async (req, res,next) => {
-    let{product}=req.body
+export const removeFromWishlist = handleError(async (req, res, next) => {
+  
+    const { product } = req.body;
 
-    
-  const remove = await userModel.findOneAndUpdate(
-    req.user._id,
-    {
-        $pull:{WishList:product}
+    // Check if the product exists in the user's wishlist
+    const user = await userModel.findById(req.user._id);
+    if (!user || !user.WishList.includes(product)) {
+        return next(new AppError("Product not found in wishlist", 404));
+    }
 
-    },
-    { new: true }
-  );
-  remove && res.json({ message: "Done ", remove });
-  !remove && res.json({ message: "Not Found" });
+    // Remove product from wishlist and return only name and wishlist fields
+    const updatedUser = await userModel.findOneAndUpdate(
+        { _id: req.user._id },
+        {
+            $pull: { WishList: product }
+        },
+        { new: true }
+    ).select('name WishList'); // Select only name and WishList fields
+
+    res.json({ message: "Done Removed", user: updatedUser });
 });
-export const getAllWishlist = handleError(async (req, res,next) => {
 
-  const exists = await userModel.findOne(
-   {_id :req.user._id},
-  );
-  exists && res.json({ message: "Done ", exists:exists.WishList });
-  !exists && res.json({ message: "Not Found" });
+export const getAllWishlist = handleError(async (req, res, next) => {
+  const user = await userModel.findById(req.user._id).select('WishList');
+
+  if (!user) {
+      return next(new AppError("User not found", 404));
+  }
+
+  res.json({ message: "Here Your Wishlist", wishlist: user.WishList });
 });
 
 
