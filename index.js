@@ -37,4 +37,4 @@ app.use((err, req, res, next) => {
   res.status(err.statusCode).json({ message: err.message, stack: err.stack });
 });
 connecttodb();
-app.listen(port, () => console.log(`Example app listening onn port ${port}!`));
+app.listen(port, () => console.log(`Example app listening on port ${port}!`));
