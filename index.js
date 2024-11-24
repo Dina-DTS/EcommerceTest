@@ -33,8 +33,16 @@ app.use("*", (req, res, next) => {
 
 //hello
 //global error to handle handleerror middleware
+// app.use((err, req, res, next) => {
+//   res.status(err.statusCode).json({ message: err.message, stack: err.stack });
+// });
 app.use((err, req, res, next) => {
-  res.status(err.statusCode).json({ message: err.message, stack: err.stack });
+  const isDevelopment = process.env.MODE === 'development';
+  res.status(err.statusCode || 500).json({
+    message: err.message,
+    ...(isDevelopment && { stack: err.stack }),
+  });
 });
+
 connecttodb();
 app.listen(port, () => console.log(`Example app listening on port ${port}!`));
